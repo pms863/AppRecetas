@@ -1,102 +1,178 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+
+import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { Header } from '@/components/layout/header';
+import { SearchBar } from '@/components/search/search-bar';
+import { RecipeList } from '@/components/recipe/recipe-list';
+import { RecipeAIAssistant } from '@/components/ai/recipe-ai-assistant';
+import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '@/lib/api';
+import { suggestRecipeVariations, SuggestRecipeVariationsInput, SuggestRecipeVariationsOutput } from '@/ai/flows/suggest-recipe-variations';
+import type { Meal, MealSummary } from '@/lib/types';
+import { useToast } from "@/hooks/use-toast";
+
+export default function HomePage() {
+  const { toast } = useToast();
+
+  // State for recipe search
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchType, setSearchType] = useState<'name' | 'ingredient'>('name');
+  const [recipes, setRecipes] = useState<(Meal | MealSummary)[]>([]);
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState<boolean>(true); // Start true for initial load
+  const [recipeError, setRecipeError] = useState<string | null>(null);
+
+  // State for AI Assistant
+  const [aiIngredients, setAiIngredients] = useState<string>('');
+  const [aiVariations, setAiVariations] = useState<string[]>([]);
+  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const fetchInitialRecipes = useCallback(async () => {
+    setIsLoadingRecipes(true);
+    setRecipeError(null);
+    try {
+      const data = await searchRecipesByName('Arrabiata'); // Default search
+      if (data && data.length > 0) {
+        setRecipes(data);
+      } else {
+        setRecipes([]);
+        setRecipeError('No recipes found for "Arrabiata". Try another search!');
+      }
+    } catch (error) {
+      console.error('Failed to fetch initial recipes:', error);
+      setRecipeError('Failed to fetch recipes. Please check your connection and try again.');
+      setRecipes([]);
+      toast({
+        title: "Error",
+        description: "Could not fetch initial recipes.",
+        variant: "destructive",
+      });
+    }
+    setIsLoadingRecipes(false);
+  }, [toast]);
+
+  useEffect(() => {
+    fetchInitialRecipes();
+  }, [fetchInitialRecipes]);
+
+  const handleSearch = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchTerm.trim()) {
+      toast({ title: "Search term empty", description: "Please enter something to search.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoadingRecipes(true);
+    setRecipeError(null);
+    setRecipes([]); 
+
+    try {
+      let data: (Meal[] | MealSummary[] | null) = null;
+      if (searchType === 'name') {
+        data = await searchRecipesByName(searchTerm);
+      } else {
+        // TheMealDB filter by ingredient returns MealSummary. For consistency, we might want full Meal details.
+        // This would involve fetching each meal by ID after getting the summary list.
+        // For now, let's use the summary directly if it's an ingredient search.
+        const summaryData = await searchRecipesByIngredient(searchTerm);
+        if (summaryData && summaryData.length > 0) {
+           // Fetch full details for up to N recipes to provide richer cards
+          const detailedRecipesPromises = summaryData.slice(0, 8).map(meal => getRecipeById(meal.idMeal));
+          const detailedResults = (await Promise.all(detailedRecipesPromises)).filter(Boolean) as Meal[];
+          data = detailedResults.length > 0 ? detailedResults : summaryData;
+        } else {
+          data = summaryData;
+        }
+      }
+
+      if (data && data.length > 0) {
+        setRecipes(data);
+      } else {
+        setRecipes([]);
+        setRecipeError(`No recipes found for "${searchTerm}".`);
+      }
+    } catch (error) {
+      console.error(`Failed to search recipes for "${searchTerm}":`, error);
+      setRecipeError('Failed to fetch recipes. Please try again later.');
+      setRecipes([]);
+      toast({
+        title: "Search Error",
+        description: "Could not perform search. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setIsLoadingRecipes(false);
+  };
+
+  const handleGetVariations = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!aiIngredients.trim()) {
+      toast({ title: "Ingredients missing", description: "Please enter some ingredients.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoadingAi(true);
+    setAiError(null);
+    setAiVariations([]);
+
+    const ingredientsArray = aiIngredients.split(',').map(s => s.trim()).filter(s => s !== '');
+    if (ingredientsArray.length === 0) {
+      setAiError("Please enter valid, comma-separated ingredients.");
+      setIsLoadingAi(false);
+      return;
+    }
+
+    const input: SuggestRecipeVariationsInput = {
+      // Using a generic recipe prompt as the user is primarily providing ingredients
+      recipe: "A delicious meal that can be prepared with the ingredients I have.",
+      availableIngredients: ingredientsArray,
+    };
+
+    try {
+      const result: SuggestRecipeVariationsOutput = await suggestRecipeVariations(input);
+      if (result.suggestions && result.suggestions.length > 0) {
+        setAiVariations(result.suggestions);
+      } else {
+        setAiError("The AI couldn't come up with variations for these ingredients. Try adding more or different ones!");
+      }
+    } catch (error) {
+      console.error('Failed to get AI recipe variations:', error);
+      setAiError('An error occurred while generating recipe ideas. Please try again.');
+      toast({
+        title: "AI Error",
+        description: "Could not get recipe variations from AI.",
+        variant: "destructive",
+      });
+    }
+    setIsLoadingAi(false);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header />
+      <main className="flex-grow">
+        <SearchBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchType={searchType}
+          setSearchType={setSearchType}
+          onSearch={handleSearch}
+          isLoading={isLoadingRecipes}
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="container mx-auto px-4">
+          <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
         </div>
+        <RecipeAIAssistant
+          ingredients={aiIngredients}
+          setIngredients={setAiIngredients}
+          variations={aiVariations}
+          onGetVariations={handleGetVariations}
+          isLoading={isLoadingAi}
+          error={aiError}
+        />
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      <footer className="py-6 text-center text-muted-foreground border-t">
+        <p>&copy; {new Date().getFullYear()} Gourmet Navigator. All rights reserved.</p>
       </footer>
     </div>
   );
