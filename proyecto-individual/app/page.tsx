@@ -2,14 +2,14 @@
 
 
 import { useState, useEffect, FormEvent, useCallback } from 'react';
-import { Header } from '@/components/layout/header';
-import { SearchBar } from '@/components/search/search-bar';
-import { RecipeList } from '@/components/recipe/recipe-list';
-import { RecipeAIAssistant } from '@/components/ai/recipe-ai-assistant';
-import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '@/lib/api';
-import { suggestRecipeVariations, SuggestRecipeVariationsInput, SuggestRecipeVariationsOutput } from '@/ai/flows/suggest-recipe-variations';
-import type { Meal, MealSummary } from '@/lib/types';
-import { useToast } from "@/hooks/use-toast";
+import { Header } from '../components/layout/header';
+import { SearchBar } from '../components/search/search-bar';
+import { RecipeList } from '../components/recipe/recipe-list';
+import { RecipeAIAssistant } from '../components/ai/recipe-ai-assistant';
+import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '../lib/api';
+import { suggestRecipeVariations, SuggestRecipeVariationsInput, SuggestRecipeVariationsOutput } from '../ai/flows/suggest-recipe-variations';
+import type { Meal, MealSummary } from '../lib/types';
+import { useToast } from "../hooks/use-toast";
 
 export default function HomePage() {
   const { toast } = useToast();

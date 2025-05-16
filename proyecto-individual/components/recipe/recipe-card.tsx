@@ -1,6 +1,6 @@
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { Meal, MealSummary } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import type { Meal, MealSummary } from '../../lib/types';
 import { Utensils } from 'lucide-react';
 
 interface RecipeCardProps {

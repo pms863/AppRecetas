@@ -1,12 +1,12 @@
 "use client";
 
 import type { FormEvent } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '../ui/textarea';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Label } from '../ui/label';
 import { Wand2 } from 'lucide-react';
-import { Spinner } from '@/components/common/spinner';
+import { Spinner } from '../common/spinner';
 
 interface RecipeAIAssistantProps {
   ingredients: string;
@@ -46,7 +46,7 @@ export function RecipeAIAssistant({
                   id="ai-ingredients"
                   placeholder="e.g., chicken breast, broccoli, soy sauce, rice"
                   value={ingredients}
-                  onChange={(e) => setIngredients(e.target.value)}
+                  onChange={(e) => setIngredients((e.target as HTMLTextAreaElement).value)}
                   rows={4}
                   className="text-base"
                   disabled={isLoading}

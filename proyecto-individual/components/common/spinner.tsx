@@ -1,5 +1,9 @@
 import { Loader2, type LucideProps } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+// Simple classNames utility function
+function cn(...classes: (string | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export function Spinner({ className, ...props }: LucideProps) {
   return (

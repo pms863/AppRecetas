@@ -1,6 +1,6 @@
-import type { Meal, MealSummary } from '@/lib/types';
+import type { Meal, MealSummary } from '../../lib/types';
 import { RecipeCard } from './recipe-card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '../ui/skeleton';
 
 interface RecipeListProps {
   recipes: (Meal | MealSummary)[];
