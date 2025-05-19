@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Header } from '../components/layout/header';
 import { SearchBar } from '../components/search/search-bar';
@@ -71,12 +70,8 @@ export default function HomePage() {
       if (searchType === 'name') {
         data = await searchRecipesByName(searchTerm);
       } else {
-        // TheMealDB filter by ingredient returns MealSummary. For consistency, we might want full Meal details.
-        // This would involve fetching each meal by ID after getting the summary list.
-        // For now, let's use the summary directly if it's an ingredient search.
         const summaryData = await searchRecipesByIngredient(searchTerm);
         if (summaryData && summaryData.length > 0) {
-           // Fetch full details for up to N recipes to provide richer cards
           const detailedRecipesPromises = summaryData.slice(0, 8).map(meal => getRecipeById(meal.idMeal));
           const detailedResults = (await Promise.all(detailedRecipesPromises)).filter(Boolean) as Meal[];
           data = detailedResults.length > 0 ? detailedResults : summaryData;
@@ -123,7 +118,6 @@ export default function HomePage() {
     }
 
     const input: SuggestRecipeVariationsInput = {
-      // Using a generic recipe prompt as the user is primarily providing ingredients
       recipe: "A delicious meal that can be prepared with the ingredients I have.",
       availableIngredients: ingredientsArray,
     };
