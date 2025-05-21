@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Meal } from '@/lib/types';
@@ -6,7 +5,9 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Youtube, MapPin, Tag, ScrollText, ListChecks } from 'lucide-react';
+import { Youtube, MapPin, Tag, ScrollText, ListChecks, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface RecipeDetailViewProps {
   recipe: Meal;
@@ -18,6 +19,10 @@ interface IngredientMeasure {
 }
 
 export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
   const ingredientsList: IngredientMeasure[] = [];
   for (let i = 1; i <= 20; i++) {
     const ingredient = recipe[`strIngredient${i}` as keyof Meal] as string | null;
@@ -28,10 +33,101 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
     }
   }
 
+  useEffect(() => {
+  const checkFavoriteStatus = async () => {
+    try {
+      const response = await fetch(`/api/recipe/favourite/check?recipeId=${recipe.idMeal}&userId=1`);
+      
+      // Check if the response is ok and is JSON
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new TypeError("Response is not JSON");
+      }
+
+      const data = await response.json();
+      setIsFavorite(data.isFavorite);
+    } catch (error) {
+      console.error('Failed to check favorite status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check favorite status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  checkFavoriteStatus();
+}, [recipe.idMeal, toast]);
+
+const handleFavoriteClick = async () => {
+  setIsLoading(true);
+  try {
+    const response = await fetch('/api/recipe/favourite/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipeId: recipe.idMeal,
+        userId: '1',
+      }),
+    });
+
+    // Check if the response is ok and is JSON
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Response is not JSON");
+    }
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      setIsFavorite(!isFavorite);
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+    } else {
+      throw new Error(data.error || 'Failed to update favorites');
+    }
+  } catch (error) {
+    console.error('Failed to update favorites:', error);
+    toast({
+      title: "Error",
+      description: "Failed to update favorites",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="overflow-hidden shadow-2xl">
         <CardHeader className="p-0 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/75"
+            onClick={handleFavoriteClick}
+            disabled={isLoading}
+            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star 
+              className={`h-6 w-6 transition-colors ${
+                isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
+              }`}
+            />
+          </Button>
           <div className="w-full h-[300px] md:h-[450px] relative">
             <Image
               src={recipe.strMealThumb}
