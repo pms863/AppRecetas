@@ -1,132 +1,140 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn as LogInIcon } from 'lucide-react';
-import { Spinner } from '@/components/common/spinner';
+import { Eye, EyeOff } from 'lucide-react';
 
-export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+interface LoginFormData {
+  correo: string;
+  contraseña: string;
+}
+
+export default function LoginForm() {
+  const [formData, setFormData] = useState<LoginFormData>({
+    correo: '',
+    contraseña: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null);
 
-    if (!email || !password) {
-      setError('Please fill in all fields.');
-      setIsLoading(false);
-      return;
-    }
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.correo,
+        password: formData.contraseña
+      }),
+    });
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const data = await response.json();
+    console.log("Login response:", data); // Debug log
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+    if (response.ok && data.user) {
+      // Store user session in localStorage with proper data structure
+      localStorage.setItem('session', JSON.stringify({
+        id: data.user.id,
+        name: data.user.nombre,
+        email: data.user.correo
+      }));
 
       toast({
-        title: 'Login Successful!',
-        description: 'Welcome back!',
+        title: "¡Bienvenido!",
+        description: "Has iniciado sesión correctamente",
       });
-      router.push('/'); // Redirect to home page or dashboard
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to log in';
-      setError(message);
-      toast({
-        title: 'Login Failed',
-        description: message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+
+      // Use router for navigation
+      router.push('/');
+      
+      // Force a refresh to update UI components that depend on session
+      window.dispatchEvent(new Event('storage'));
+    } else {
+      throw new Error(data.error || 'Error al iniciar sesión');
     }
-  };
+  } catch (error) {
+    console.error('Login error:', error);
+    setError('Email o contraseña incorrectos');
+    toast({
+      title: "Error",
+      description: "Email o contraseña incorrectos",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-primary">Welcome Back!</CardTitle>
-        <CardDescription>Log in to your Gourmet Navigator account.</CardDescription>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl text-center">Iniciar Sesión</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              value={formData.correo}
+              onChange={(e) => setFormData(prev => ({ ...prev, correo: e.target.value }))}
               required
               disabled={isLoading}
-              className="text-base"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.contraseña}
+                onChange={(e) => setFormData(prev => ({ ...prev, contraseña: e.target.value }))}
                 required
                 disabled={isLoading}
-                className="text-base pr-10"
+                className="pr-10"
               />
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </div>
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" /> Logging in...
-              </>
-            ) : (
-              <>
-                <LogInIcon className="mr-2 h-4 w-4" /> Log In
-              </>
-            )}
+          {error && (
+            <p className="text-sm text-destructive text-center">{error}</p>
+          )}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        {/* You can add links like "Forgot password?" here if needed */}
-      </CardFooter>
     </Card>
   );
 }
