@@ -32,44 +32,48 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     checkFavoriteStatus();
   }, [recipe.idMeal]);
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e?: React.MouseEvent) => {
+  if (e) {
     e.preventDefault();
     e.stopPropagation();
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch('/api/recipe/favourite/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipeId: recipe.idMeal,
-          userId: '1', // TODO: Replace with actual user ID from auth context
-        }),
-      });
+  }
+  setIsLoading(true);
+  
+  try {
+    const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
+    const response = await fetch(endpoint, {
+      method: isFavorite ? 'DELETE' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipeId: recipe.idMeal,
+        userId: '1', // TODO: Replace with actual user ID from auth context
+      }),
+    });
 
-      const data = await response.json();
-      
-      if (response.ok) {
-        setIsFavorite(!isFavorite); // Toggle the favorite state
-        toast({
-          title: data.message,
-          description: isFavorite ? "Recipe removed from favorites" : "Recipe added to favorites",
-        });
-      } else {
-        throw new Error(data.error || 'Failed to update favorites');
-      }
-    } catch {
+    const data = await response.json();
+    
+    if (response.ok) {
+      setIsFavorite(!isFavorite); // Toggle the favorite state
       toast({
-        title: "Error",
-        description: "Failed to update favorites",
-        variant: "destructive",
+        title: "Success",
+        description: data.message,
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      throw new Error(data.error || 'Failed to update favorites');
     }
-  };
+  } catch (error) {
+    console.error('Failed to update favorites:', error);
+    toast({
+      title: "Error",
+      description: "Failed to update favorites",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <Link href={`/recipe/${recipe.idMeal}`} passHref legacyBehavior={false} className="block group h-full cursor-pointer">

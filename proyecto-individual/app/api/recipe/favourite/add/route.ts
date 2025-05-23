@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     // Insert into favorites using correct column names
     const { error: favourite} = await supabase
         .from("favoritos")
-        .insert({ usuarioid: userId, recetaid: recipeId }) // 0 pq no tengo usuarios
+        .insert({ usuarioid: 0, recetaid: recipeId }) // 0 pq no tengo usuarios
         .select()
         .single();
         

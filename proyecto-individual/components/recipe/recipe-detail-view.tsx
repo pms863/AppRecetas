@@ -63,34 +63,30 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
   checkFavoriteStatus();
 }, [recipe.idMeal, toast]);
 
-const handleFavoriteClick = async () => {
+const handleFavoriteClick = async (e?: React.MouseEvent) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
   setIsLoading(true);
+  
   try {
-    const response = await fetch('/api/recipe/favourite/add', {
-      method: 'POST',
+    const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
+    const response = await fetch(endpoint, {
+      method: isFavorite ? 'DELETE' : 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         recipeId: recipe.idMeal,
-        userId: '1',
+        userId: '1', // TODO: Replace with actual user ID from auth context
       }),
     });
-
-    // Check if the response is ok and is JSON
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new TypeError("Response is not JSON");
-    }
 
     const data = await response.json();
     
     if (response.ok) {
-      setIsFavorite(!isFavorite);
+      setIsFavorite(!isFavorite); // Toggle the favorite state
       toast({
         title: "Success",
         description: data.message,
