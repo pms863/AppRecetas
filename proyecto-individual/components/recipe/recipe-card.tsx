@@ -14,6 +14,7 @@ interface RecipeCardProps {
 export function RecipeCard({ recipe }: RecipeCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<{ id?: string } | null>(null);
   const { toast } = useToast();
   const isFullMeal = (recipe as Meal).strInstructions !== undefined;
   const category = isFullMeal ? (recipe as Meal).strCategory : null;
@@ -32,48 +33,55 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     checkFavoriteStatus();
   }, [recipe.idMeal]);
 
-  const handleFavoriteClick = async (e?: React.MouseEvent) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  setIsLoading(true);
-  
-  try {
-    const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
-    const response = await fetch(endpoint, {
-      method: isFavorite ? 'DELETE' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        recipeId: recipe.idMeal,
-        userId: '1', // TODO: Replace with actual user ID from auth context
-      }),
-    });
-
-    const data = await response.json();
-    
-    if (response.ok) {
-      setIsFavorite(!isFavorite); // Toggle the favorite state
-      toast({
-        title: "Success",
-        description: data.message,
-      });
-    } else {
-      throw new Error(data.error || 'Failed to update favorites');
+  useEffect(() => {
+    const session = localStorage.getItem('session');
+    if (session) {
+      setUser(JSON.parse(session));
     }
-  } catch (error) {
-    console.error('Failed to update favorites:', error);
-    toast({
-      title: "Error",
-      description: "Failed to update favorites",
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  }, []);
+
+  const handleFavoriteClick = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsLoading(true);
+    
+    try {
+      const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
+      const response = await fetch(endpoint, {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipeId: recipe.idMeal,
+          userId: '1', // TODO: Replace with actual user ID from auth context
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setIsFavorite(!isFavorite); // Toggle the favorite state
+        toast({
+          title: "Success",
+          description: data.message,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to update favorites');
+      }
+    } catch (error) {
+      console.error('Failed to update favorites:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Link href={`/recipe/${recipe.idMeal}`} passHref legacyBehavior={false} className="block group h-full cursor-pointer">
@@ -82,13 +90,15 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           variant="ghost"
           size="icon"
           className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/75"
-          onClick={handleFavoriteClick}
-          disabled={isLoading}
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          onClick={user ? handleFavoriteClick : undefined}
+          disabled={isLoading || !user}
+          title={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
+          aria-label={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
         >
           <Star 
             className={`h-5 w-5 transition-colors ${
-              isFavorite ? 'fill-green-500 text-green-500' : 'text-gray-400 hover:text-green-500'
+              isFavorite ? 'fill-green-500 text-green-500' : 
+              user ? 'text-gray-400 hover:text-green-500' : 'text-gray-300'
             }`}
           />
         </Button>
