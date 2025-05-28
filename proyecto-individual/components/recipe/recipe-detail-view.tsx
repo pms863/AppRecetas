@@ -21,6 +21,7 @@ interface IngredientMeasure {
 export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<{ id?: string } | null>(null);
   const { toast } = useToast();
 
   const ingredientsList: IngredientMeasure[] = [];
@@ -34,77 +35,72 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
   }
 
   useEffect(() => {
-  const checkFavoriteStatus = async () => {
+    const session = localStorage.getItem('session');
+    if (session) {
+      setUser(JSON.parse(session));
+    }
+  }, []);
+
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!user?.id) return;
+
+      try {
+        const response = await fetch(`/api/recipe/favourite/check?recipeId=${recipe.idMeal}&userId=${user.id}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        setIsFavorite(data.isFavorite);
+      } catch (error) {
+        console.error('Failed to check favorite status:', error);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [recipe.idMeal, user?.id]);
+
+  const handleFavoriteClick = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsLoading(true);
+
     try {
-      const response = await fetch(`/api/recipe/favourite/check?recipeId=${recipe.idMeal}&userId=1`);
-      
-      // Check if the response is ok and is JSON
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new TypeError("Response is not JSON");
-      }
+      const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
+      const response = await fetch(endpoint, {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipeId: recipe.idMeal,
+          userId: '1', // TODO: Replace with actual user ID from auth context
+        }),
+      });
 
       const data = await response.json();
-      setIsFavorite(data.isFavorite);
+
+      if (response.ok) {
+        setIsFavorite(!isFavorite); // Toggle the favorite state
+        toast({
+          title: "Success",
+          description: data.message,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to update favorites');
+      }
     } catch (error) {
-      console.error('Failed to check favorite status:', error);
+      console.error('Failed to update favorites:', error);
       toast({
         title: "Error",
-        description: "Failed to check favorite status",
+        description: "Failed to update favorites",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  checkFavoriteStatus();
-}, [recipe.idMeal, toast]);
-
-const handleFavoriteClick = async (e?: React.MouseEvent) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  setIsLoading(true);
-  
-  try {
-    const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
-    const response = await fetch(endpoint, {
-      method: isFavorite ? 'DELETE' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        recipeId: recipe.idMeal,
-        userId: '1', // TODO: Replace with actual user ID from auth context
-      }),
-    });
-
-    const data = await response.json();
-    
-    if (response.ok) {
-      setIsFavorite(!isFavorite); // Toggle the favorite state
-      toast({
-        title: "Success",
-        description: data.message,
-      });
-    } else {
-      throw new Error(data.error || 'Failed to update favorites');
-    }
-  } catch (error) {
-    console.error('Failed to update favorites:', error);
-    toast({
-      title: "Error",
-      description: "Failed to update favorites",
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -114,14 +110,15 @@ const handleFavoriteClick = async (e?: React.MouseEvent) => {
             variant="ghost"
             size="icon"
             className="absolute top-4 right-4 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/75"
-            onClick={handleFavoriteClick}
-            disabled={isLoading}
-            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            onClick={user ? handleFavoriteClick : undefined}
+            disabled={isLoading || !user}
+            title={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
+            aria-label={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
           >
-            <Star 
-              className={`h-6 w-6 transition-colors ${
-                isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
-              }`}
+            <Star
+              className={`h-6 w-6 transition-colors ${isFavorite ? 'fill-yellow-400 text-yellow-400' :
+                user ? 'text-gray-400' : 'text-gray-300'
+                }`}
             />
           </Button>
           <div className="w-full h-[300px] md:h-[450px] relative">
@@ -138,9 +135,9 @@ const handleFavoriteClick = async (e?: React.MouseEvent) => {
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="text-center -mt-16 relative z-10">
-             <CardTitle className="text-3xl md:text-4xl font-bold text-primary bg-background/80 backdrop-blur-sm inline-block p-3 rounded-lg shadow-md">
-                {recipe.strMeal}
-              </CardTitle>
+            <CardTitle className="text-3xl md:text-4xl font-bold text-primary bg-background/80 backdrop-blur-sm inline-block p-3 rounded-lg shadow-md">
+              {recipe.strMeal}
+            </CardTitle>
           </div>
 
           <div className="flex flex-wrap gap-4 items-center justify-center">
@@ -165,7 +162,7 @@ const handleFavoriteClick = async (e?: React.MouseEvent) => {
               ))}
             </div>
           )}
-          
+
           <div className="grid md:grid-cols-3 gap-6 pt-6">
             <div className="md:col-span-1">
               <h3 className="text-xl font-semibold mb-3 text-accent flex items-center">
@@ -206,8 +203,8 @@ const handleFavoriteClick = async (e?: React.MouseEvent) => {
           )}
 
           {recipe.strSource && (
-             <div className="text-center pt-4 text-sm text-muted-foreground">
-                Original Source: <a href={recipe.strSource} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{recipe.strSource}</a>
+            <div className="text-center pt-4 text-sm text-muted-foreground">
+              Original Source: <a href={recipe.strSource} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{recipe.strSource}</a>
             </div>
           )}
         </CardContent>

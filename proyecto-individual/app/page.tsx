@@ -30,7 +30,7 @@ export default function HomePage() {
     setIsLoadingRecipes(true);
     setRecipeError(null);
     try {
-      const data = await searchRecipesByName('Arrabiata'); // Default search
+      const data = await searchRecipesByName('Beef'); // Default search
       if (data && data.length > 0) {
         setRecipes(data);
       } else {
@@ -63,7 +63,7 @@ export default function HomePage() {
 
     setIsLoadingRecipes(true);
     setRecipeError(null);
-    setRecipes([]); 
+    setRecipes([]);
 
     try {
       let data: (Meal[] | MealSummary[] | null) = null;
@@ -143,16 +143,15 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <Header
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        searchType={searchType}
+        setSearchType={setSearchType}
+        onSearch={handleSearch}
+        isLoading={isLoadingRecipes}
+      />
       <main className="flex-grow">
-        <SearchBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchType={searchType}
-          setSearchType={setSearchType}
-          onSearch={handleSearch}
-          isLoading={isLoadingRecipes}
-        />
         <div className="container mx-auto px-4">
           <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
         </div>
