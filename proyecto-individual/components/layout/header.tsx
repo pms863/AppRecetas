@@ -17,6 +17,12 @@ interface HeaderProps {
   isLoading?: boolean;
 }
 
+type User = {
+  id?: string;
+  name?: string;
+  email?: string;
+};
+
 export function Header({
   searchTerm = '',
   setSearchTerm = () => { },
@@ -59,14 +65,14 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex items-center h-14 max-w-screen-2xl">
-        <div className="flex w-full justify-between items-center pl-10 gap-4">
+      <div className="w-full px-4 flex h-14">
+        <div className="flex w-full justify-between items-center gap-4 max-w-screen-2xl mx-auto">
           <Link href="/" className="flex items-center space-x-2 shrink-0">
             <ChefHat className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl text-primary">Gourmet Navigator</span>
           </Link>
 
-          <div className="flex-1 max-w-xl mx-4">
+          <div className="flex-1 max-w-xl">
             {setSearchTerm && setSearchType && onSearch && (
               <SearchBar
                 searchTerm={searchTerm}
