@@ -48,13 +48,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <ChefHat className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary sm:inline-block">
-            Gourmet Navigator
-          </span>
-        </Link>
+      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4"> {/* Added px-4 for padding */}
+      <Link href="/" className="flex items-center space-x-2">
+        <ChefHat className="h-7 w-7 text-primary" />
+        <span className="font-bold text-xl text-primary sm:inline-block">
+        Gourmet Navigator
+        </span>
+      </Link>
         
         <div className="flex items-center gap-4">
           {user ? (
@@ -62,7 +62,7 @@ export function Header() {
               onClick={handleProfileClick}
               variant="ghost" 
               size="icon" 
-              className="rounded-full hover:bg-accent/10"
+              className="rounded-full border border-black bg-transparent hover:bg-black/10"
               aria-label="Ver perfil"
             >
               <Avatar className="h-8 w-8">
