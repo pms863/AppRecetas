@@ -3,9 +3,8 @@
 import { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Header } from '../components/layout/header';
 import { RecipeList } from '../components/recipe/recipe-list';
-import { RecipeAIAssistant } from '../components/ai/recipe-ai-assistant';
+import AIAssistant from '../components/ai/AIAssistant';
 import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '../lib/api';
-import { suggestRecipeVariations, SuggestRecipeVariationsInput, SuggestRecipeVariationsOutput } from '../ai/flows/suggest-recipe-variations';
 import type { Meal, MealSummary } from '../lib/types';
 import { useToast } from "../hooks/use-toast";
 
@@ -16,25 +15,25 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchType, setSearchType] = useState<'name' | 'ingredient'>('name');
   const [recipes, setRecipes] = useState<(Meal | MealSummary)[]>([]);
-  const [isLoadingRecipes, setIsLoadingRecipes] = useState<boolean>(true); // Start true for initial load
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState<boolean>(true);
   const [recipeError, setRecipeError] = useState<string | null>(null);
 
-  // State for AI Assistant
-  const [aiIngredients, setAiIngredients] = useState<string>('');
-  const [aiVariations, setAiVariations] = useState<string[]>([]);
-  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
-  const [aiError, setAiError] = useState<string | null>(null);
+  // Elimina todo el state de AI
+  // const [aiIngredients, setAiIngredients] = useState<string>('');
+  // const [aiVariations, setAiVariations] = useState<string[]>([]);
+  // const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
+  // const [aiError, setAiError] = useState<string | null>(null);
 
   const fetchInitialRecipes = useCallback(async () => {
     setIsLoadingRecipes(true);
     setRecipeError(null);
     try {
-      const data = await searchRecipesByName('Beef'); // Default search
+      const data = await searchRecipesByName('Beef');
       if (data && data.length > 0) {
         setRecipes(data);
       } else {
         setRecipes([]);
-        setRecipeError('No recipes found for "Arrabiata". Try another search!');
+        setRecipeError('No recipes found for "Beef". Try another search!');
       }
     } catch (error) {
       console.error('Failed to fetch initial recipes:', error);
@@ -98,47 +97,7 @@ export default function HomePage() {
     setIsLoadingRecipes(false);
   };
 
-  const handleGetVariations = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!aiIngredients.trim()) {
-      toast({ title: "Ingredients missing", description: "Please enter some ingredients.", variant: "destructive" });
-      return;
-    }
-
-    setIsLoadingAi(true);
-    setAiError(null);
-    setAiVariations([]);
-
-    const ingredientsArray = aiIngredients.split(',').map(s => s.trim()).filter(s => s !== '');
-    if (ingredientsArray.length === 0) {
-      setAiError("Please enter valid, comma-separated ingredients.");
-      setIsLoadingAi(false);
-      return;
-    }
-
-    const input: SuggestRecipeVariationsInput = {
-      recipe: "A delicious meal that can be prepared with the ingredients I have.",
-      availableIngredients: ingredientsArray,
-    };
-
-    try {
-      const result: SuggestRecipeVariationsOutput = await suggestRecipeVariations(input);
-      if (result.suggestions && result.suggestions.length > 0) {
-        setAiVariations(result.suggestions);
-      } else {
-        setAiError("The AI couldn't come up with variations for these ingredients. Try adding more or different ones!");
-      }
-    } catch (error) {
-      console.error('Failed to get AI recipe variations:', error);
-      setAiError('An error occurred while generating recipe ideas. Please try again.');
-      toast({
-        title: "AI Error",
-        description: "Could not get recipe variations from AI.",
-        variant: "destructive",
-      });
-    }
-    setIsLoadingAi(false);
-  };
+  // Elimina handleGetVariations
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -154,18 +113,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
         </div>
-        <RecipeAIAssistant
-          ingredients={aiIngredients}
-          setIngredients={setAiIngredients}
-          variations={aiVariations}
-          onGetVariations={handleGetVariations}
-          isLoading={isLoadingAi}
-          error={aiError}
-        />
+        {/* Quita RecipeAIAssistant */}
       </main>
       <footer className="py-6 text-center text-muted-foreground border-t">
         <p>&copy; {new Date().getFullYear()} Gourmet Navigator. All rights reserved.</p>
       </footer>
+      <AIAssistant />
     </div>
   );
 }
