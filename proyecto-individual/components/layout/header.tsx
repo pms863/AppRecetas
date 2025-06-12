@@ -3,7 +3,7 @@
 import { ChefHat, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchBar } from '@/components/search/search-bar';
@@ -32,25 +32,28 @@ export function Header({
   isLoading = false
 }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Check session when component mounts and when localStorage changes
     const checkSession = () => {
       const session = localStorage.getItem('session');
+      const storedAvatar = localStorage.getItem('avatar');
+
       if (session) {
         try {
           const userData = JSON.parse(session);
-          // Asignar userData aunque falten campos
           setUser(userData);
-          console.log('Session data loaded:', userData);
+          if (storedAvatar) setAvatar(storedAvatar);
         } catch (error) {
           console.error('Error parsing session:', error);
           localStorage.removeItem('session');
           setUser(null);
+          setAvatar(null);
         }
       } else {
         setUser(null);
+        setAvatar(null);
       }
     };
 
@@ -95,10 +98,9 @@ export function Header({
                 aria-label="Ver perfil"
               >
                 <Avatar className="h-8 w-8">
+                  {avatar && <AvatarImage src={avatar} alt="Avatar del usuario" />}
                   <AvatarFallback>
-                    {user.name && user.name.length > 0 ?
-                      user.name[0].toUpperCase() :
-                      <UserCircle className="h-5 w-5" />}
+                    {user.name?.charAt(0).toUpperCase() ?? <UserCircle className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
               </Button>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Header } from '../components/layout/header';
-import { SearchBar } from '../components/search/search-bar';
 import { RecipeList } from '../components/recipe/recipe-list';
 import { RecipeAIAssistant } from '../components/ai/recipe-ai-assistant';
 import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '../lib/api';
