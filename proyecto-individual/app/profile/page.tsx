@@ -68,11 +68,11 @@ export default function ProfilePage() {
           .then(data => setFavoritesCount(data.count || 0))
           .catch(() => setFavoritesCount(0));
         
-        // --- NUEVO ---: Cargar la lista completa de recetas favoritas
+         // --- NUEVO ---: Cargar la lista completa de recetas favoritas
         setIsLoadingFavorites(true);
         setFavoritesError(null);
-        // --- MODIFICADO ---: Usamos el nuevo endpoint que creaste
-        fetch(`/api/favorites/list?userId=${validatedUser.id}`)
+        // --- MODIFICADO ---: Usar la ruta correcta del endpoint
+        fetch(`/api/recipe/favourite/list?userId=${validatedUser.id}`)
           .then(res => {
             if (!res.ok) throw new Error('Failed to fetch favorites');
             return res.json();
@@ -80,7 +80,7 @@ export default function ProfilePage() {
           .then((data: Meal[]) => {
             setFavoriteRecipes(data);
             // Si quieres puedes actualizar el contador desde aquí para asegurar consistencia
-            // setFavoritesCount(data.length); 
+            setFavoritesCount(data.length); 
           })
           .catch(() => {
             setFavoritesError("No se pudieron cargar tus recetas favoritas.");
@@ -141,15 +141,15 @@ export default function ProfilePage() {
   if (!user) return null; 
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col bg-background">
       <Header />
       {/* --- MODIFICADO ---: Contenedor principal con layout de 2 columnas en pantallas grandes */}
       <main className="flex-grow container max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Columna de la tarjeta de perfil */}
-            <div className="md:col-span-1">
-                <Card className="shadow-lg sticky top-8" style={{ backgroundColor: '#B4D3B2' }}>
+           <div className="md:col-span-1">
+                <Card className="shadow-lg h-full flex flex-col" style={{ backgroundColor: '#B4D3B2' }}>
                     <CardHeader className="flex flex-col items-center text-center gap-4">
                         <Popover>
                             <PopoverTrigger asChild>
@@ -163,7 +163,7 @@ export default function ProfilePage() {
                                     </div>
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 p-4">
+                            <PopoverContent className="w-80 p-4 bg-white border shadow-lg">
                                 <div className="grid gap-4">
                                     <h4 className="font-medium leading-none">Elige tu avatar</h4>
                                     <div className="grid grid-cols-5 gap-2">
@@ -182,18 +182,20 @@ export default function ProfilePage() {
                             <p className="text-muted-foreground text-sm">{user.email}</p>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                        <Separator />
-                        <h3 className="text-lg font-medium text-center">Estadísticas</h3>
-                        <Card>
-                            <CardContent className="pt-6 flex items-center justify-center gap-3">
-                                <Heart className="h-5 w-5 text-red-500" />
-                                <span className="font-bold text-lg">{favoritesCount ?? '0'}</span>
-                                <span>Recetas Favoritas</span>
-                            </CardContent>
-                        </Card>
-                        <Separator />
-                        <Button variant="destructive" onClick={handleLogout} className="w-full">
+                    <CardContent className="space-y-4 pt-4 flex flex-col flex-grow">
+                        <div className="flex-grow space-y-4">
+                            <Separator />
+                            <h3 className="text-lg font-medium text-center">Estadísticas</h3>
+                            <Card>
+                                <CardContent className="pt-6 flex items-center justify-center gap-3">
+                                    <Heart className="h-5 w-5 text-red-500" />
+                                    <span className="font-bold text-lg">{favoritesCount ?? '0'}</span>
+                                    <span>Recetas Favoritas</span>
+                                </CardContent>
+                            </Card>
+                            <Separator />
+                        </div>
+                        <Button variant="destructive" onClick={handleLogout} className="w-full mt-auto">
                             <LogOut className="h-4 w-4 mr-2" />
                             Cerrar Sesión
                         </Button>
