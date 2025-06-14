@@ -29,9 +29,9 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         console.error('Failed to check favorite status:', error);
       }
     };
-
-    checkFavoriteStatus();
-  }, [recipe.idMeal]);
+// Solo ejecutar si hay usuario
+  if (user) checkFavoriteStatus();
+}, [recipe.idMeal, user]);
 
   useEffect(() => {
     const session = localStorage.getItem('session');
@@ -46,6 +46,8 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
       e.stopPropagation();
     }
     setIsLoading(true);
+    if (!user?.id) return; // Si no hay ID de usuario, no hacer nada
+  setIsLoading(true);
     
     try {
       const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
@@ -56,7 +58,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         },
         body: JSON.stringify({
           recipeId: recipe.idMeal,
-          userId: '1', // TODO: Replace with actual user ID from auth context
+          userId: user.id, // TODO: Replace with actual user ID from auth context
         }),
       });
 

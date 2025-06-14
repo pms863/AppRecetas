@@ -75,7 +75,7 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
         },
         body: JSON.stringify({
           recipeId: recipe.idMeal,
-          userId: '1', // TODO: Replace with actual user ID from auth context
+          userId:  user?.id, // TODO: Replace with actual user ID from auth context
         }),
       });
 

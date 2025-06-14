@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest) {
     const { error: deleteError, data } = await supabase
         .from("favoritos")
         .delete()
-        .eq("usuarioid", 0) // Using 0 as we did in add
+        .eq("usuarioid", userId) // Using 0 as we did in add
         .eq("recetaid", recipeId)
         .select(); // Add select to see what was deleted
 
