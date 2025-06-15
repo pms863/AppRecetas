@@ -8,9 +8,7 @@ const nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  webpack: (config, { isServer }) => {
-    // Ignore handlebars warnings for Genkit AI
+  }, webpack: (config, { isServer }) => {
     config.ignoreWarnings = [
       {
         module: /node_modules\/handlebars\/lib\/index\.js/,
@@ -18,7 +16,6 @@ const nextConfig: NextConfig = {
       },
     ];
 
-    // Handle Genkit AI dependencies that might cause issues
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,

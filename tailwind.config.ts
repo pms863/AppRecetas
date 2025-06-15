@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        './app/**/*.{js,ts,jsx,tsx}',  // Added app directory
+        './app/**/*.{js,ts,jsx,tsx}',
         './pages/**/*.{js,ts,jsx,tsx}',
         './components/**/*.{js,ts,jsx,tsx}',
     ],
@@ -41,5 +41,20 @@ module.exports = {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        function ({ addUtilities }: { addUtilities: any }) {
+            addUtilities({
+                '.scrollbar-hide': {
+                    /* IE and Edge */
+                    '-ms-overflow-style': 'none',
+                    /* Firefox */
+                    'scrollbar-width': 'none',
+                    /* Safari and Chrome */
+                    '&::-webkit-scrollbar': {
+                        'display': 'none'
+                    }
+                }
+            })
+        }
+    ],
 }

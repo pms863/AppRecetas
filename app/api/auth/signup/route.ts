@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
         const { email, password, displayName } = await req.json();
 
         if (!email || !password || !displayName) {
-            return NextResponse.json({ 
-                error: "Missing required fields" 
+            return NextResponse.json({
+                error: "Missing required fields"
             }, { status: 400 });
         }
 
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (existingUser) {
-            return NextResponse.json({ 
-                error: "User already exists with this email" 
+            return NextResponse.json({
+                error: "User already exists with this email"
             }, { status: 409 });
         }
 
@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
         const { data: newUser, error: insertError } = await supabase
             .from('usuarios')
             .insert([
-                { 
+                {
                     nombre: displayName,
                     correo: email,
-                    contraseña: password, // Note: In a real app, you should hash the password
+                    contraseña: password,
                 }
             ])
             .select()
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
 
         if (insertError) {
             console.error('Error creating user:', insertError);
-            return NextResponse.json({ 
-                error: "Failed to create user" 
+            return NextResponse.json({
+                error: "Failed to create user"
             }, { status: 500 });
         }
 
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Signup error:', error);
-        return NextResponse.json({ 
-            error: "Internal server error" 
+        return NextResponse.json({
+            error: "Internal server error"
         }, { status: 500 });
     }
 }

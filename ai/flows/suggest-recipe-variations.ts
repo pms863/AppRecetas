@@ -1,14 +1,7 @@
 'use server';
-/**
- * @fileOverview This file defines a Genkit flow for suggesting recipes based on available ingredients.
- *
- * - suggestRecipeVariations - A function that takes available ingredients and returns suggestions for recipes you can make.
- * - SuggestRecipeVariationsInput - The input type for the suggestRecipeVariations function.
- * - SuggestRecipeVariationsOutput - The return type for the suggestRecipeVariations function.
- */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const SuggestRecipeVariationsInputSchema = z.object({
   recipe: z.string().describe('The original recipe (optional).').optional(),
@@ -27,8 +20,8 @@ export async function suggestRecipeVariations(input: SuggestRecipeVariationsInpu
 
 const prompt = ai.definePrompt({
   name: 'suggestRecipeVariationsPrompt',
-  input: {schema: SuggestRecipeVariationsInputSchema},
-  output: {schema: SuggestRecipeVariationsOutputSchema},
+  input: { schema: SuggestRecipeVariationsInputSchema },
+  output: { schema: SuggestRecipeVariationsOutputSchema },
   prompt: `Eres un experto en cocina. Basándote en los ingredientes disponibles, sugiere recetas específicas que se puedan hacer con esos ingredientes.
 
 Ingredientes disponibles: {{#each availableIngredients}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
@@ -53,7 +46,7 @@ const suggestRecipeVariationsFlow = ai.defineFlow(
     outputSchema: SuggestRecipeVariationsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

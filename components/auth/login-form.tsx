@@ -26,58 +26,54 @@ export default function LoginForm() {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError(null);
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.correo,
-        password: formData.contraseña
-      }),
-    });
-
-    const data = await response.json();
-    console.log("Login response:", data); // Debug log
-
-    if (response.ok && data.user) {
-      // Store user session in localStorage with proper data structure
-      localStorage.setItem('session', JSON.stringify({
-        id: data.user.id,
-        name: data.user.nombre,
-        email: data.user.correo
-      }));
-
-      toast({
-        title: "¡Bienvenido!",
-        description: "Has iniciado sesión correctamente",
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.correo,
+          password: formData.contraseña
+        }),
       });
 
-      // Use router for navigation
-      router.push('/');
-      
-      // Force a refresh to update UI components that depend on session
-      window.dispatchEvent(new Event('storage'));
-    } else {
-      throw new Error(data.error || 'Error al iniciar sesión');
+      const data = await response.json();
+      console.log("Login response:", data); // Debug log
+
+      if (response.ok && data.user) {
+        // Store user session in localStorage with proper data structure
+        localStorage.setItem('session', JSON.stringify({
+          id: data.user.id,
+          name: data.user.nombre,
+          email: data.user.correo
+        })); toast({
+          title: "¡Bienvenido!",
+          description: "Has iniciado sesión correctamente",
+        });
+
+        router.push('/');
+
+        window.dispatchEvent(new Event('storage'));
+      } else {
+        throw new Error(data.error || 'Error al iniciar sesión');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Email o contraseña incorrectos');
+      toast({
+        title: "Error",
+        description: "Email o contraseña incorrectos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    setError('Email o contraseña incorrectos');
-    toast({
-      title: "Error",
-      description: "Email o contraseña incorrectos",
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <Card className="w-full">

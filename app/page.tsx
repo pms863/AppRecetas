@@ -11,19 +11,11 @@ import { useToast } from "../hooks/use-toast";
 
 export default function HomePage() {
   const { toast } = useToast();
-
-  // State for recipe search
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchType, setSearchType] = useState<'name' | 'ingredient'>('name');
   const [recipes, setRecipes] = useState<(Meal | MealSummary)[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState<boolean>(true);
   const [recipeError, setRecipeError] = useState<string | null>(null);
-
-  // Elimina todo el state de AI
-  // const [aiIngredients, setAiIngredients] = useState<string>('');
-  // const [aiVariations, setAiVariations] = useState<string[]>([]);
-  // const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
-  // const [aiError, setAiError] = useState<string | null>(null);
 
   const fetchInitialRecipes = useCallback(async () => {
     setIsLoadingRecipes(true);
@@ -97,9 +89,6 @@ export default function HomePage() {
     }
     setIsLoadingRecipes(false);
   };
-
-  // Elimina handleGetVariations
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header
@@ -109,13 +98,11 @@ export default function HomePage() {
         setSearchType={setSearchType}
         onSearch={handleSearch}
         isLoading={isLoadingRecipes}
-      />      <main className="flex-grow">
-        <div className="container mx-auto px-4">
-          <RecipeListWrapper>
-            <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
-          </RecipeListWrapper>
-        </div>
-        {/* Quita RecipeAIAssistant */}
+      />      <main className="flex-grow">        <div className="container mx-auto px-4">
+        <RecipeListWrapper>
+          <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
+        </RecipeListWrapper>
+      </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground border-t">
         <p>&copy; {new Date().getFullYear()} Gourmet Navigator. All rights reserved.</p>
