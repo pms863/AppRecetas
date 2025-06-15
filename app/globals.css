@@ -5,19 +5,26 @@
 
 @layer base {
   :root {
-    --background: #f9f5ef; /* Cream */
-    --foreground: #2f3d2f; /* Darker Earthy Green */
-    --card: #fdfbf6;       /* Lighter Cream */
+    --background: #f9f5ef;
+    /* Cream */
+    --foreground: #2f3d2f;
+    /* Darker Earthy Green */
+    --card: #fdfbf6;
+    /* Lighter Cream */
     --card-foreground: #2f3d2f;
     --popover: #fdfbf6;
     --popover-foreground: #2f3d2f;
-    --primary: #607f5d;    /* Earthy Green */
-    --primary-foreground: #fcfcfa; /* Very light cream */
-    --secondary: #dce3da;  /* Light green */
+    --primary: #607f5d;
+    /* Earthy Green */
+    --primary-foreground: #fcfcfa;
+    /* Very light cream */
+    --secondary: #dce3da;
+    /* Light green */
     --secondary-foreground: #2f3d2f;
     --muted: #eef0ec;
     --muted-foreground: #7c8f7c;
-    --accent: #b65a38;     /* Terracotta */
+    --accent: #b65a38;
+    /* Terracotta */
     --accent-foreground: #fcfcfa;
     --destructive: #dc2626;
     --destructive-foreground: #fafafa;
@@ -79,25 +86,52 @@
 }
 
 body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: var(--font-geist-sans, Arial, sans-serif);
-    @apply min-h-screen antialiased;
-  }
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+  @apply min-h-screen antialiased;
+}
 
 /* Add this to app/globals.css if it's not already there */
- @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Animaciones para efecto shimmer/glittering */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%) skewX(12deg);
+  }
+
+  100% {
+    transform: translateX(300%) skewX(12deg);
+  }
 }

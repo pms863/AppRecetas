@@ -13,7 +13,7 @@ export async function DELETE(req: NextRequest) {
     catch {
         return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    
+
     const { recipeId, userId } = json;
     if (!recipeId || !userId) {
         return NextResponse.json({ error: "Missing requested inputs" }, { status: 400 });
@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest) {
     const { error: deleteError, data } = await supabase
         .from("favoritos")
         .delete()
-        .eq("usuarioid", userId) // Using 0 as we did in add
+        .eq("usuarioid", userId) // Match the user ID for deletion
         .eq("recetaid", recipeId)
         .select(); // Add select to see what was deleted
 
@@ -39,13 +39,13 @@ export async function DELETE(req: NextRequest) {
     console.log('Deleted data:', data);
 
     if (!data || data.length === 0) {
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: "No record found to delete",
-            isFavorite: false 
+            isFavorite: false
         }, { status: 404 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
         message: "Recipe removed from favorites successfully",
         isFavorite: false,
         deletedRecord: data

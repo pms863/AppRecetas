@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
 import { Header } from '../components/layout/header';
 import { RecipeList } from '../components/recipe/recipe-list';
+import { RecipeListWrapper } from '../components/recipe/recipe-list-wrapper';
 import AIAssistant from '../components/ai/AIAssistant';
 import { searchRecipesByName, searchRecipesByIngredient, getRecipeById } from '../lib/api';
 import type { Meal, MealSummary } from '../lib/types';
@@ -108,10 +109,11 @@ export default function HomePage() {
         setSearchType={setSearchType}
         onSearch={handleSearch}
         isLoading={isLoadingRecipes}
-      />
-      <main className="flex-grow">
+      />      <main className="flex-grow">
         <div className="container mx-auto px-4">
-          <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
+          <RecipeListWrapper>
+            <RecipeList recipes={recipes} isLoading={isLoadingRecipes} error={recipeError} />
+          </RecipeListWrapper>
         </div>
         {/* Quita RecipeAIAssistant */}
       </main>

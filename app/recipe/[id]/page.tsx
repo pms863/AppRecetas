@@ -1,8 +1,8 @@
-'use client';
+'use client'; 
 
 import { useEffect, useState } from 'react';
 // useRouter y usePathname para obtener parámetros de ruta en App Router (Client Components)
-import { useParams } from 'next/navigation';
+import { useParams } from 'next/navigation'; 
 import { Header } from '@/components/layout/header';
 import { RecipeDetailView } from '@/components/recipe/recipe-detail-view';
 import { Spinner } from '@/components/common/spinner';
@@ -67,7 +67,7 @@ export default function RecipePage() {
     } else if (params && !id) { // params existe pero id no es un string válido (o no está)
       setIsLoading(false);
       setError('Recipe ID is missing or invalid.');
-      toast({
+       toast({
         title: "Error",
         description: "Recipe ID is missing or invalid in the URL.",
         variant: "destructive",
@@ -96,7 +96,7 @@ export default function RecipePage() {
           {!isLoading && !error && recipe && (
             <RecipeDetailView recipe={recipe} />
           )}
-          {!isLoading && !error && !recipe && !isLoading && ( // Condición extra para evitar mostrar "not found" mientras carga
+           {!isLoading && !error && !recipe && !isLoading && ( // Condición extra para evitar mostrar "not found" mientras carga
             <div className="container mx-auto py-12 text-center">
               <p className="text-muted-foreground text-xl">Recipe not found or still loading.</p>
             </div>

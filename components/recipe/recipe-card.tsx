@@ -2,9 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Meal, MealSummary } from '@/lib/types';
 import { Utensils, Star } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface RecipeCardProps {
@@ -14,25 +15,11 @@ interface RecipeCardProps {
 export function RecipeCard({ recipe }: RecipeCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   const [user, setUser] = useState<{ id?: string } | null>(null);
   const { toast } = useToast();
   const isFullMeal = (recipe as Meal).strInstructions !== undefined;
   const category = isFullMeal ? (recipe as Meal).strCategory : null;
-
-  useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      try {
-        const response = await fetch(`/api/recipe/favourite/check?recipeId=${recipe.idMeal}&userId=1`);
-        const data = await response.json();
-        setIsFavorite(data.isFavorite);
-      } catch (error) {
-        console.error('Failed to check favorite status:', error);
-      }
-    };
-// Solo ejecutar si hay usuario
-  if (user) checkFavoriteStatus();
-}, [recipe.idMeal, user]);
-
   useEffect(() => {
     const session = localStorage.getItem('session');
     if (session) {
@@ -40,15 +27,39 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     }
   }, []);
 
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!user?.id) {
+        setIsFavorite(false); // No user, no favorites
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/recipe/favourite/check?recipeId=${recipe.idMeal}&userId=${user.id}`);
+        if (!response.ok) {
+          setIsFavorite(false);
+          return;
+        }
+        const data = await response.json();
+        setIsFavorite(data.isFavorite);
+      } catch (error) {
+        console.error('Failed to check favorite status:', error);
+        setIsFavorite(false);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [recipe.idMeal, user?.id]);
+
   const handleFavoriteClick = async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
+
+    if (!user?.id) return
+
     setIsLoading(true);
-    if (!user?.id) return; // Si no hay ID de usuario, no hacer nada
-  setIsLoading(true);
-    
     try {
       const endpoint = isFavorite ? '/api/recipe/favourite/delete' : '/api/recipe/favourite/add';
       const response = await fetch(endpoint, {
@@ -58,12 +69,12 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         },
         body: JSON.stringify({
           recipeId: recipe.idMeal,
-          userId: user.id, // TODO: Replace with actual user ID from auth context
+          userId: user?.id,
         }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setIsFavorite(!isFavorite); // Toggle the favorite state
         toast({
@@ -97,11 +108,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           title={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
           aria-label={user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to add favorites"}
         >
-          <Star 
-            className={`h-5 w-5 transition-colors ${
-              isFavorite ? 'fill-green-500 text-green-500' : 
+          <Star
+            className={`h-5 w-5 transition-colors ${isFavorite ? 'fill-green-500 text-green-500' :
               user ? 'text-gray-400 hover:text-green-500' : 'text-gray-300'
-            }`}
+              }`}
           />
         </Button>
 
@@ -114,16 +124,21 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               <Utensils className="mr-1 h-4 w-4" /> {category}
             </CardDescription>
           )}
-        </CardHeader>
-        <CardContent className="flex-grow flex flex-col justify-between">
+        </CardHeader>        <CardContent className="flex-grow flex flex-col justify-between">
           <div className="relative w-full aspect-video mb-4 rounded-md overflow-hidden">
+            {imageLoading && (
+              <Skeleton className="absolute inset-0 w-full h-full" />
+            )}
             <Image
               src={recipe.strMealThumb || "https://placehold.co/300x200.png"}
               alt={recipe.strMeal}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className={`object-cover transition-all duration-300 group-hover:scale-105 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                }`}
               data-ai-hint="food recipe"
+              onLoad={() => setImageLoading(false)}
+              onError={() => setImageLoading(false)}
             />
           </div>
         </CardContent>

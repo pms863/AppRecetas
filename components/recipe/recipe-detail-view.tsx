@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Youtube, MapPin, Tag, ScrollText, ListChecks, Star } from 'lucide-react';
+import { Youtube, MapPin, Tag, ScrollText, ListChecks, Star, DollarSign, Calculator, EuroIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,9 +18,37 @@ interface IngredientMeasure {
   measure: string;
 }
 
+interface IngredientCost {
+  ingredient: string;
+  measure: string;
+  price: number | null;
+  currency: string;
+  found: boolean;
+  searchedTerm: string;
+  parsedQuantity?: {
+    amount: number;
+    unit: string;
+    originalText: string;
+  };
+  pricePerKilo?: number;
+  calculatedPrice?: number;
+  pricePerKiloText?: string;
+}
+
+interface CostCalculationResponse {
+  ingredients: IngredientCost[];
+  totalCost: number;
+  currency: string;
+  estimatedCost: boolean;
+  source: string;
+}
+
 export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCostLoading, setIsCostLoading] = useState(false);
+  const [costData, setCostData] = useState<CostCalculationResponse | null>(null);
+  const [showCostDetails, setShowCostDetails] = useState(false);
   const [user, setUser] = useState<{ id?: string } | null>(null);
   const { toast } = useToast();
 
@@ -75,7 +103,7 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
         },
         body: JSON.stringify({
           recipeId: recipe.idMeal,
-          userId:  user?.id, // TODO: Replace with actual user ID from auth context
+          userId: user?.id,
         }),
       });
 
@@ -99,6 +127,48 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+  const handleCostCalculation = async () => {
+    setIsCostLoading(true);
+    setShowCostDetails(false); // Hide previous results while loading
+    setCostData(null);
+
+    try {
+      toast({
+        title: "Calculating Cost",
+        description: "Searching for ingredient prices online...",
+      });
+
+      const response = await fetch('/api/recipe/cost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ingredients: ingredientsList
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to calculate cost');
+      }
+
+      const data: CostCalculationResponse = await response.json();
+      setCostData(data);
+      setShowCostDetails(true); toast({
+        title: "Cost Calculated Successfully!",
+        description: `Total estimated cost: ${data.totalCost}€ (${data.source})`,
+      });
+    } catch (error) {
+      console.error('Failed to calculate cost:', error);
+      toast({
+        title: "Error",
+        description: "Failed to calculate recipe cost. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCostLoading(false);
     }
   };
 
@@ -135,7 +205,7 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="text-center -mt-16 relative z-10">
-            <CardTitle className="text-3xl md:text-4xl font-bold text-primary bg-background/80 backdrop-blur-sm inline-block p-3 rounded-lg shadow-md">
+            <CardTitle className="text-3xl md:text-4xl font-bold text-primary bg-white/40 backdrop-blur-xl inline-block p-3 rounded-lg shadow-lg">
               {recipe.strMeal}
             </CardTitle>
           </div>
@@ -163,23 +233,92 @@ export function RecipeDetailView({ recipe }: RecipeDetailViewProps) {
             </div>
           )}
 
-          <div className="grid md:grid-cols-3 gap-6 pt-6">
-            <div className="md:col-span-1">
-              <h3 className="text-xl font-semibold mb-3 text-accent flex items-center">
+          <div className="grid md:grid-cols-3 gap-6 pt-6">            <div className="md:col-span-1">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xl font-semibold text-accent flex items-center">
                 <ListChecks className="mr-2 h-5 w-5" /> Ingredients
               </h3>
-              {ingredientsList.length > 0 ? (
-                <ul className="space-y-2 text-foreground/90 list-disc list-inside pl-2">
-                  {ingredientsList.map(({ ingredient, measure }, index) => (
-                    <li key={index}>
-                      <span className="font-medium">{ingredient}</span>: {measure}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">No ingredients listed.</p>
-              )}
+              <Button
+                onClick={handleCostCalculation}
+                disabled={isCostLoading || ingredientsList.length === 0}
+                size="sm"
+                variant="outline"
+                className={`gap-2 ${!isCostLoading && 'hover:bg-primary hover:text-black hover:shadow-lg transition-all duration-300'}`}
+              >
+                {isCostLoading ? 'Calculating...' : 'Estimate Cost'}
+                {isCostLoading ? (
+                  <Calculator className="h-4 w-4 animate-spin" />
+                ) : (
+                  <EuroIcon className="h-4 w-4" />
+                )}
+              </Button>
             </div>
+
+            {isCostLoading && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calculator className="h-4 w-4 animate-spin text-blue-600" />
+                  <span className="font-semibold text-blue-800">Calculating costs...</span>
+                </div>
+                <p className="text-xs text-blue-600">
+                  Searching online for ingredient prices. This may take a moment.
+                </p>
+              </div>
+            )}
+
+            {ingredientsList.length > 0 ? (
+              <ul className="space-y-2 text-foreground/90">
+                {ingredientsList.map(({ ingredient, measure }, index) => {
+                  const costInfo = costData?.ingredients.find(c => c.ingredient === ingredient);
+                  return (
+                    <li key={index} className="flex justify-between items-center">
+                      <span>
+                        <span className="font-medium">{ingredient}</span>
+                        {measure && <span className="text-muted-foreground">: {measure}</span>}
+                      </span>
+                      {costInfo && showCostDetails && (
+                        <div className="flex flex-col items-end text-sm">
+                          <span className={`font-medium ${costInfo.found ? 'text-green-600' : 'text-amber-600'}`}>
+                            unit cost: {costInfo.price?.toFixed(2)} €
+                            {!costInfo.found && <span className="text-xs text-amber-600 ml-1">*estimated</span>}
+                          </span>
+                          {costInfo.pricePerKiloText && (
+                            <span className="text-xs text-gray-500">
+                              {costInfo.pricePerKiloText}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">No ingredients listed.</p>
+            )}
+
+            {/* Resumen total - movido después de la lista de ingredientes */}
+            {costData && showCostDetails && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-lg text-green-800">Total Cost:</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {costData.totalCost} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-green-700">
+                  <span>{costData.source}</span>
+                  <span>
+                    {costData.ingredients.filter(i => i.found).length}/{costData.ingredients.length} found online
+                  </span>
+                </div>
+                {costData.estimatedCost && (
+                  <p className="text-sm text-amber-700 mt-2 bg-amber-50 p-2 rounded border border-amber-200">
+                    ⚠️ Some prices are estimated as ingredients weren't found online
+                  </p>
+                )}
+              </div>
+            )}</div>
 
             <div className="md:col-span-2">
               <h3 className="text-xl font-semibold mb-3 text-accent flex items-center">

@@ -39,11 +39,10 @@ export function SearchBar({
           value={searchType}
           onValueChange={(value: 'name' | 'ingredient') => setSearchType(value)}
           disabled={isLoading}
-        >
-          <SelectTrigger className="w-[130px]">
+        >          <SelectTrigger className="w-[130px]">
             <SelectValue placeholder="Search type" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 shadow-lg border border-border/40">
             <SelectItem value="name">By Name</SelectItem>
             <SelectItem value="ingredient">By Ingredient</SelectItem>
           </SelectContent>

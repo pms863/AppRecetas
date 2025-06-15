@@ -7,8 +7,8 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get('userId');
 
     if (!recipeId || !userId) {
-        return NextResponse.json({ 
-            error: "Recipe ID and User ID are required" 
+        return NextResponse.json({
+            error: "Recipe ID and User ID are required"
         }, { status: 400 });
     }
 
@@ -17,25 +17,25 @@ export async function GET(req: NextRequest) {
         const { data: favorite, error } = await supabase
             .from("favoritos")
             .select("*")
-            .eq("usuarioid", userId)
-            .eq("recetaid", recipeId)
+            .eq("usuarioid", Number(userId))
+            .eq("recetaid", Number(recipeId))
             .maybeSingle();
 
         if (error) {
             console.error("Error checking favorite status:", error);
-            return NextResponse.json({ 
-                error: "Failed to check favorite status" 
+            return NextResponse.json({
+                error: "Failed to check favorite status"
             }, { status: 500 });
         }
 
-        return NextResponse.json({ 
-            isFavorite: !!favorite 
+        return NextResponse.json({
+            isFavorite: !!favorite
         });
 
     } catch (error) {
         console.error("Error:", error);
-        return NextResponse.json({ 
-            error: "Internal server error" 
+        return NextResponse.json({
+            error: "Internal server error"
         }, { status: 500 });
     }
 }

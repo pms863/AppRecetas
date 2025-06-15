@@ -34,7 +34,7 @@ export default function AIAssistant() {
       setSuggestions(data.suggestions || []);
     } catch (error) {
       console.error('Error getting suggestions:', error);
-      setSuggestions(['Error al obtener sugerencias. Por favor, intenta de nuevo.']);
+      setSuggestions(['Error getting suggestions. Please try again.']);
     } finally {
       setIsLoading(false);
     }
@@ -42,62 +42,62 @@ export default function AIAssistant() {
 
   return (
     <>
-      {/* Botón flotante */}
-      <button 
+      {/* Floating button */}
+      <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300 z-50"
-        style={{ backgroundColor: 'rgb(180, 211, 178)' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(148, 177, 146)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(106, 160, 103)'}
-        aria-label="Asistente de cocina IA"
+        className="fixed bottom-6 right-6 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-transform transform hover:scale-110 duration-300 z-50 border-2"
+        style={{ backgroundColor: 'rgb(102, 187, 106)' }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(76, 175, 80)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(102, 187, 106)'}
+        aria-label="Gourmet's AI assistance"
       >
-        <Sparkles className="h-6 w-6" />
+        <Sparkles className="h-6 w-6 animate-pulse" />
       </button>
 
-      {/* Panel lateral */}
+      {/* Side panel */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="w-96 bg-white text-black border-l z-50 overflow-y-auto"
         >
           <SheetHeader>
-            <SheetTitle>Asistente de Cocina IA</SheetTitle>
+            <SheetTitle>Gourmet's AI assistance</SheetTitle>
             <SheetDescription>
-              Dime qué ingredientes tienes y te sugiero recetas que puedes hacer
+              Discover amazing recipes! Tell me what ingredients you have, and let the AI work its magic.
             </SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="ingredients">¿Qué ingredientes tienes? *</Label>
-              <Textarea 
+              <Label htmlFor="ingredients">What ingredients do you have?</Label>
+              <Textarea
                 id="ingredients"
                 value={ingredients}
                 onChange={(e) => setIngredients(e.target.value)}
-                placeholder="Ejemplo: pollo, arroz, tomate, cebolla, ajo..."
+                placeholder="Example: chicken, rice, tomato, onion, garlic..."
                 className="mt-1"
                 rows={4}
               />
             </div>
-            
-            <Button 
-              onClick={handleGetSuggestions} 
+
+            <Button
+              onClick={handleGetSuggestions}
               disabled={!ingredients.trim() || isLoading}
               className="w-full"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando recetas...
+                  Generating recipes...
                 </>
               ) : (
-                '¿Qué puedo cocinar?'
+                'What can I cook?'
               )}
             </Button>
 
             {suggestions.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium">Recetas que puedes hacer:</h4>
+                <h4 className="font-medium">Recipes you can make:</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {suggestions.map((suggestion, i) => (
                     <div key={i} className="p-3 bg-green-50 rounded-lg text-sm border border-green-200">
