@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, LogOut, ImagePlus } from 'lucide-react';
 
@@ -16,11 +16,11 @@ import Image from 'next/image';
 // --- NUEVO ---: Importa el componente de la lista de recetas y el tipo Meal
 import { RecipeList } from '@/components/recipe/recipe-list';
 import type { Meal } from '@/lib/types';
+import { ProfileShimmer, RecipeListShimmer } from '@/components/ui/shimmer';
 
 import {
   Popover,
-  PopoverContent,
-  PopoverTrigger,
+  PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 
 type User = {
@@ -67,8 +67,8 @@ export default function ProfilePage() {
           .then(res => res.json())
           .then(data => setFavoritesCount(data.count || 0))
           .catch(() => setFavoritesCount(0));
-        
-         // --- NUEVO ---: Cargar la lista completa de recetas favoritas
+
+        // --- NUEVO ---: Cargar la lista completa de recetas favoritas
         setIsLoadingFavorites(true);
         setFavoritesError(null);
         // --- MODIFICADO ---: Usar la ruta correcta del endpoint
@@ -80,7 +80,7 @@ export default function ProfilePage() {
           .then((data: Meal[]) => {
             setFavoriteRecipes(data);
             // Si quieres puedes actualizar el contador desde aquí para asegurar consistencia
-            setFavoritesCount(data.length); 
+            setFavoritesCount(data.length);
           })
           .catch(() => {
             setFavoritesError("No se pudieron cargar tus recetas favoritas.");
@@ -123,22 +123,29 @@ export default function ProfilePage() {
     'beer.png', 'burrito.png', 'cake.png', 'coffe.png', 'donut.png',
     'fast-food.png', 'ice.png', 'noodles.png', 'pizza.png', 'ramen.png',
     'rice.png', 'salad.png', 'shrimp.png', 'sushi.png', 'taco.png'
-  ];
-
-  if (loading) {
+  ]; if (loading) {
     return (
-        <div className="flex min-h-screen items-center justify-center">
-            <Card className="w-full max-w-md p-6">
-                <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
-                <Skeleton className="h-6 w-1/2 mx-auto mb-2" />
-                <Skeleton className="h-4 w-3/4 mx-auto mb-6" />
-                <Skeleton className="h-10 w-full" />
-            </Card>
-        </div>
+      <div className="flex flex-col bg-background min-h-screen">
+        <Header />
+        <main className="flex-grow container max-w-6xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Shimmer de la tarjeta de perfil */}
+            <div className="md:col-span-1">
+              <ProfileShimmer />
+            </div>
+
+            {/* Shimmer de las recetas favoritas */}
+            <div className="md:col-span-2 flex flex-col">
+              <div className="h-8 w-64 mb-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded" />
+              <RecipeListShimmer variant="profile" />
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
-  
-  if (!user) return null; 
+
+  if (!user) return null;
 
   return (
     <div className="flex flex-col bg-background">
@@ -146,72 +153,82 @@ export default function ProfilePage() {
       {/* --- MODIFICADO ---: Contenedor principal con layout de 2 columnas en pantallas grandes */}
       <main className="flex-grow container max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            {/* Columna de la tarjeta de perfil */}
-           <div className="md:col-span-1">
-                <Card className="shadow-lg h-full flex flex-col" style={{ backgroundColor: '#B4D3B2' }}>
-                    <CardHeader className="flex flex-col items-center text-center gap-4">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <button className="relative group">
-                                    <Avatar className="h-24 w-24 border-2 border-background">
-                                        <AvatarImage src={avatar} alt="Avatar" />
-                                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ImagePlus className="h-8 w-8 text-white" />
-                                    </div>
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-4 bg-white border shadow-lg">
-                                <div className="grid gap-4">
-                                    <h4 className="font-medium leading-none">Elige tu avatar</h4>
-                                    <div className="grid grid-cols-5 gap-2">
-                                    {avatarImages.map((img) => (
-                                        <button key={img} onClick={() => handleAvatarChange(`/images/food/${img}`)}
-                                            className={`rounded-full transition-transform transform hover:scale-110 ${ avatar === `/images/food/${img}` ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
-                                            <Image src={`/images/food/${img}`} alt={img} width={48} height={48} className="rounded-full" />
-                                        </button>
-                                    ))}
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                        <div>
-                            <CardTitle className="text-2xl">Hola, {user.name}</CardTitle>
-                            <p className="text-muted-foreground text-sm">{user.email}</p>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4 flex flex-col flex-grow">
-                        <div className="flex-grow space-y-4">
-                            <Separator />
-                            <h3 className="text-lg font-medium text-center">Estadísticas</h3>
-                            <Card>
-                                <CardContent className="pt-6 flex items-center justify-center gap-3">
-                                    <Heart className="h-5 w-5 text-red-500" />
-                                    <span className="font-bold text-lg">{favoritesCount ?? '0'}</span>
-                                    <span>Recetas Favoritas</span>
-                                </CardContent>
-                            </Card>
-                            <Separator />
-                        </div>
-                        <Button variant="destructive" onClick={handleLogout} className="w-full mt-auto">
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Cerrar Sesión
-                        </Button>
+
+          {/* Columna de la tarjeta de perfil */}
+          <div className="md:col-span-1">
+            <Card className="shadow-lg h-full flex flex-col" style={{ backgroundColor: '#B4D3B2' }}>
+              <CardHeader className="flex flex-col items-center text-center gap-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="relative group">
+                      <Avatar className="h-24 w-24 border-2 border-background">
+                        <AvatarImage src={avatar} alt="Avatar" />
+                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ImagePlus className="h-8 w-8 text-white" />
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4 bg-white border shadow-lg">
+                    <div className="grid gap-4">
+                      <h4 className="font-medium leading-none">Elige tu avatar</h4>
+                      <div className="grid grid-cols-5 gap-2">
+                        {avatarImages.map((img) => (
+                          <button key={img} onClick={() => handleAvatarChange(`/images/food/${img}`)}
+                            className={`rounded-full transition-transform transform hover:scale-110 ${avatar === `/images/food/${img}` ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                            <Image src={`/images/food/${img}`} alt={img} width={48} height={48} className="rounded-full" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <div>
+                  <CardTitle className="text-2xl">Hello, {user.name}</CardTitle>
+                  <p className="text-muted-foreground text-sm">{user.email}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4 flex flex-col flex-grow">
+                <div className="flex-grow space-y-4">
+                  <Separator />
+                  <h3 className="text-lg font-medium text-center">Statistics</h3>
+                  <Card>
+                    <CardContent className="pt-6 flex items-center justify-center gap-3">
+                      <Heart className="h-5 w-5 text-red-500" />
+                      <span className="font-bold text-lg">{favoritesCount ?? '0'}</span>
+                      <span>Saved as favourites</span>
                     </CardContent>
-                </Card>
-            </div>
-            
-            {/* --- NUEVO ---: Columna para la lista de recetas favoritas */}
-            <div className="md:col-span-2">
-                <h2 className="text-3xl font-bold mb-6 border-b pb-2">Mis Recetas Favoritas</h2>
-                <RecipeList 
+                  </Card>
+                  <Separator />
+                </div>
+                <Button variant="destructive" onClick={handleLogout} className="w-full mt-auto">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Log out
+                </Button>
+              </CardContent>
+            </Card>
+          </div>          {/* --- NUEVO ---: Columna para la lista de recetas favoritas */}
+          <div className="md:col-span-2 flex flex-col">
+            <h2 className="text-3xl font-bold mb-6 border-b pb-2">My favourites recipes</h2>            <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
+              <Suspense fallback={<RecipeListShimmer variant="profile" />}>
+                {isLoadingFavorites ? (
+                  <RecipeListShimmer variant="profile" />
+                ) : favoritesError ? (
+                  <p className="text-destructive text-center py-8">{favoritesError}</p>
+                ) : favoriteRecipes.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No tienes recetas favoritas aún.</p>
+                ) : (
+                  <RecipeList
                     recipes={favoriteRecipes}
-                    isLoading={isLoadingFavorites}
-                    error={favoritesError}
-                />
+                    isLoading={false}
+                    error={null}
+                    variant="profile"
+                  />
+                )}
+              </Suspense>
             </div>
+          </div>
         </div>
       </main>
     </div>
