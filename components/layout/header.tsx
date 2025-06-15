@@ -64,10 +64,8 @@ export function Header({
 
   const handleProfileClick = () => {
     router.push('/profile');
-  };
-
-  return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  }; return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 shadow-lg">
       <div className="w-full px-4 flex h-14">
         <div className="flex w-full justify-between items-center gap-4 max-w-screen-2xl mx-auto">
           <Link href="/" className="flex items-center space-x-2 shrink-0">
